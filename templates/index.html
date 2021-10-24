@@ -1,0 +1,352 @@
+<!-- Подключаем шаблон base -->
+{% extends 'base.html' %} 
+
+<!-- Название страницы -->
+{% block title %} 
+Moscow Sport Objects
+{% endblock %}
+
+<!-- Встраиваем css карты -->
+{% block addhead %} 
+<script src='https://api.mapbox.com/mapbox-gl-js/v2.5.1/mapbox-gl.js'></script>
+<link href='https://api.mapbox.com/mapbox-gl-js/v2.5.1/mapbox-gl.css' rel='stylesheet' />
+<script src='https://api.tiles.mapbox.com/mapbox-gl-js/v2.5.0/mapbox-gl.js'></script>
+<script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+<link href='https://api.tiles.mapbox.com/mapbox-gl-js/v2.5.0/mapbox-gl.css' rel='stylesheet' />
+<script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.0/mapbox-gl-geocoder.min.js'></script>
+<link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.0/mapbox-gl-geocoder.css' type='text/css' />
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="{{  url_for('static', filename='map/map_style.css')  }}">
+<!-- Тепловая карта -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+<script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+<script src="{{  url_for('static', filename='map/hotbib.js')  }}"></script>
+
+
+<!-- Стиль тепловой карты -->
+<style>
+    #map_hot {
+        height: 95%;
+        width: 90%;
+        margin: 5rem auto;
+    }
+</style>
+
+<!-- Стиль основной карты -->
+<style>
+    * {
+        box-sizing: border-box;
+    }
+    
+    body {
+        color: #404040;
+        font: 400 15px/22px 'Source Sans Pro', 'Helvetica Neue', sans-serif;
+        margin: 0;
+        padding: 0;
+        -webkit-font-smoothing: antialiased;
+    }
+    
+    h1 {
+        font-size: 22px;
+        margin: 0;
+        font-weight: 400;
+        line-height: 20px;
+        padding: 20px 2px;
+    }
+    
+    a {
+        color: #404040;
+        text-decoration: none;
+    }
+    
+    a:hover {
+        color: #101010;
+    }
+    /* The page is split between map and sidebar - the sidebar gets 1/3, map
+gets 2/3 of the page. You can adjust this to your personal liking. */
+    
+    .sidebar {
+        position: absolute;
+        width: 30%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        overflow: hidden;
+        border-right: 1px solid rgba(0, 0, 0, 0.25);
+    }
+    
+    .map {
+        position: absolute;
+        left: 30%;
+        width: 70%;
+        top: 0;
+        bottom: 0;
+    }
+    
+    .heading {
+        background: #fff;
+        border-bottom: 1px solid #eee;
+        height: 60px;
+        line-height: 60px;
+        padding: 0 10px;
+    }
+    
+    .listings {
+        height: 100%;
+        overflow: auto;
+        padding-bottom: 60px;
+    }
+    
+    .listings .item {
+        border-bottom: 1px solid #eee;
+        padding: 10px;
+        text-decoration: none;
+    }
+    
+    .listings .item:last-child {
+        border-bottom: none;
+    }
+    
+    .listings .item .title {
+        display: block;
+        color: #280172;
+        font-weight: 700;
+    }
+    
+    .listings .item .title small {
+        font-weight: 400;
+    }
+    
+    .listings .item.active .title,
+    .listings .item .title:hover {
+        color: #3246ff;
+    }
+    
+    .listings .item.active {
+        background-color: #f8f8f8;
+    }
+    
+    /* Marker tweaks */
+    
+    .mapboxgl-popup-close-button {
+        display: none;
+    }
+    
+    .mapboxgl-popup-content {
+        font: 400 15px/22px 'Source Sans Pro', 'Helvetica Neue', sans-serif;
+        padding: 0;
+        width: 180px;
+    }
+    
+    .mapboxgl-popup-content h3 {
+        background: #3246ff;
+        color: #fff;
+        margin: 0;
+        padding: 10px;
+        border-radius: 3px 3px 0 0;
+        font-weight: 700;
+        margin-top: -15px;
+    }
+    
+    .mapboxgl-popup-content h4 {
+        margin: 0;
+        padding: 10px;
+        font-weight: 400;
+    }
+    
+    .mapboxgl-popup-content div {
+        padding: 10px;
+    }
+    
+    .mapboxgl-popup-anchor-top>.mapboxgl-popup-content {
+        margin-top: 15px;
+    }
+    
+    .mapboxgl-popup-anchor-top>.mapboxgl-popup-tip {
+        border-bottom-color: #3246ff;
+    }
+</style>
+
+{% endblock %}
+
+
+<!-- Индивидуальный блок каждой страницы -->
+{% block selfbody %} 
+<!-- Настройки -->
+    <div class="row row-height">
+        <div class='sidebar'>
+            <div class='heading'>
+                <h1>Our locations</h1>
+            </div>
+            <div class='Fillter'>
+                <p>
+                    <a class="btn btn-primary" data-toggle="collapse" href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample">
+                      Filter
+                    </a>
+                </p>
+                <div class="collapse" id="collapseExample">
+                    <div class="filter-ctrl">
+                        <input id="filter-input" type="text" name="filter" placeholder="Filter by name">
+                    </div>
+                </div>
+            </div>
+            <div id='listings' class='listings'></div>
+        </div>
+        <div id="map" class="map">
+        </div>
+        <script>
+            mapboxgl.accessToken = 'pk.eyJ1IjoiYW5kcnV4YTAiLCJhIjoiY2t2MWF0aXNjMHB3eDJybHAwa2tpZHZpbCJ9.vYJxANxTeYg_RfOCtc_hQQ';
+    
+            const map = new mapboxgl.Map({
+                container: 'map',
+                style: 'mapbox://styles/mapbox/light-v10',
+                center: [37.615, 55.740],
+                zoom: 9,
+            });
+    
+            map.on('load', () => {
+                map.addSource('earthquakes', {
+                    type: 'geojson',
+                    // Use a URL for the value for the `data` property.
+                    data: 'http://127.0.0.1:5000/data' //<---- not 127.0.0.1, need your IP
+                });
+    
+    
+    
+                var request = new XMLHttpRequest();
+                request.open('GET', 'http://127.0.0.1:5000/data');
+                request.responseType = 'json';
+                request.send();
+    
+                request.onload = function() {
+                    var result = request.response;
+                    buildLocationList(result);
+                }
+    
+    
+                map.on('click', ({
+                    point
+                }) => {
+                    /* Determine if a feature in the "locations" layer exists at that point. */
+                    const features = map.queryRenderedFeatures(point, {
+                        layers: ['locations']
+                    });
+    
+                    /* If it does not exist, return */
+                    if (!features.length) return;
+    
+                    const clickedPoint = features[0];
+    
+                    /* Fly to the point */
+                    flyToStore(clickedPoint);
+    
+                    /* Close all other popups and display popup for clicked store */
+                    createPopUp(clickedPoint);
+    
+                    /* Highlight listing in sidebar (and remove highlight for all other listings) */
+                    const activeItem = document.getElementsByClassName('active');
+                    if (activeItem[0]) {
+                        activeItem[0].classList.remove('active');
+                    }
+                    const listing = document.getElementById(
+                        `listing-${clickedPoint.properties.id}`
+                    );
+                    listing.classList.add('active');
+                });
+    
+    
+    
+    
+                function buildLocationList({
+                    features
+                }) {
+                    for (const {
+                            properties
+                        }
+                        of features) {
+    
+                        map.addLayer({
+                            'id': 'locations',
+                            'type': 'circle',
+                            'source': 'earthquakes',
+                        });
+                        /* Add a new listing section to the sidebar. */
+                        const listings = document.getElementById('listings');
+                        const listing = listings.appendChild(document.createElement('div'));
+                        /* Assign a unique `id` to the listing. */
+                        listing.id = `listing-${properties.Num}`;
+                        /* Assign the `item` class to each listing for styling. */
+                        listing.className = 'item';
+    
+                        /* Add the link to the individual listing created above. */
+                        const link = listing.appendChild(document.createElement('a'));
+                        link.href = '#';
+                        link.className = 'title';
+                        link.id = `link-${properties.Num}`;
+                        link.innerHTML = `${properties.Object}`;
+    
+                        /* Add details to the individual listing. */
+                        const details = listing.appendChild(document.createElement('div'));
+                        if (properties.About) {
+                            details.innerHTML = `${properties.About}`;
+                        }
+    
+                        link.addEventListener('click', function() {
+                            for (const feature of features) {
+                                if (this.id === `link-${feature.properties.Num}`) {
+                                    flyToStore(feature);
+                                    createPopUp(feature);
+                                }
+                            }
+                            const activeItem = document.getElementsByClassName('active');
+                            if (activeItem[0]) {
+                                activeItem[0].classList.remove('active');
+                            }
+                            this.parentNode.classList.add('active');
+                        });
+                    }
+                }
+    
+                function flyToStore(currentFeature) {
+                    map.flyTo({
+                        center: currentFeature.geometry.coordinates,
+                        zoom: 15
+                    });
+                }
+    
+                function createPopUp(currentFeature) {
+                    const popUps = document.getElementsByClassName('mapboxgl-popup');
+                    /** Check if there is already a popup on the map and if so, remove it */
+                    if (popUps[0]) popUps[0].remove();
+    
+                    const popup = new mapboxgl.Popup({
+                            closeOnClick: false
+                        })
+                        .setLngLat(currentFeature.geometry.coordinates)
+                        .setHTML(`<h3>${currentFeature.properties.Object}</h3><h4>${currentFeature.properties.About}</h4>`)
+                        .addTo(map);
+                }
+    
+            });
+        </script>
+    </div>
+
+    <br><br><br>
+    <div class="main_title">
+        <h2>Тепловая карта спортивнх объектов</h2>
+        <span><em></em></span>
+    </div>
+    
+    <div id="map_hot"></div>
+    
+
+{% endblock %} <!-- Конец индивидуального блока каждой страницы -->
+
+{% block addjs %}
+    <script src="{{  url_for('static', filename='map/hotmap.js')  }}"></script>
+{% endblock %}
+
